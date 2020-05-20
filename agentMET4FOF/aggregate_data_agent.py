@@ -44,60 +44,19 @@ def create_dataset(df):
   n_seq, seq_len, n_features = torch.stack(dataset).shape
   return dataset, seq_len, n_features
 ########################################################################################################################
-class SineGeneratorAgent_Test1(AgentMET4FOF):
-        def init_parameters(self, sensor_buffer_size):
+class SineGeneratorAgent(AgentMET4FOF):
+        def init_parameters(self, sensor_buffer_size, scale_amplitude=1):
             self.stream = SineGenerator()
             self.buffer_size = sensor_buffer_size
+            self.scale_amplitude = scale_amplitude
 
         def agent_loop(self):
             if self.current_state == "Running":
                 sine_data = self.stream.next_sample()  # dictionary
                 #current_time = datetime.now().second
                 current_time = datetime.today().strftime("%H:%M:%S.%f")[:-3]
-                sine_data = {'Time':current_time,'y1': sine_data['x']}
+                sine_data = {'Time':current_time,'y1': sine_data['x'] * self.scale_amplitude}
 
-                # self.name="SineGeneratorAgent_Test1"
-                self.update_data_memory({'from': self.name, 'data': sine_data})
-                # send out buffered data if the stored data has exceeded the buffer size
-                if len(self.memory[self.name][next(iter(self.memory[self.name]))]) >= self.buffer_size:
-                    self.send_output(self.memory[self.name])
-                    self.memory = {}
-
-
-class SineGeneratorAgent_Test2(AgentMET4FOF):
-    def init_parameters(self, sensor_buffer_size):
-        self.stream = SineGenerator()
-        self.buffer_size = sensor_buffer_size
-
-    def agent_loop(self):
-        if self.current_state == "Running":
-            sine_data = self.stream.next_sample()  # dictionary
-            now = datetime.now()
-            current_time = datetime.today().strftime("%H:%M:%S.%f")[:-3]
-            sine_data = {'Time':current_time,'y2': sine_data['x']*.3}
-
-            # save data into memory
-            # self.name="SineGeneratorAgent_Test1"
-            self.update_data_memory({'from': self.name, 'data': sine_data})
-            # send out buffered data if the stored data has exceeded the buffer size
-            if len(self.memory[self.name][next(iter(self.memory[self.name]))]) >= self.buffer_size:
-                self.send_output(self.memory[self.name])
-                self.memory = {}
-
-class SineGeneratorAgent_Test3(AgentMET4FOF):
-        def init_parameters(self, sensor_buffer_size):
-            self.stream = SineGenerator()
-            self.buffer_size = sensor_buffer_size
-
-        def agent_loop(self):
-            if self.current_state == "Running":
-                sine_data = self.stream.next_sample()  # dictionary
-                now = datetime.now()
-                current_time = datetime.today().strftime("%H:%M:%S.%f")[:-3]
-                sine_data = {'Time':current_time,'y3': sine_data['x']*.6}
-
-                # save data into memory
-                # self.name="SineGeneratorAgent_Test1"
                 self.update_data_memory({'from': self.name, 'data': sine_data})
                 # send out buffered data if the stored data has exceeded the buffer size
                 if len(self.memory[self.name][next(iter(self.memory[self.name]))]) >= self.buffer_size:
@@ -526,9 +485,9 @@ def main():
     # start agent network server
     agentNetwork = AgentNetwork()
 
-    gen_agent_test1 = agentNetwork.add_agent(name="Sensor1", agentType=SineGeneratorAgent_Test1, log_mode=False)
-    gen_agent_test2 = agentNetwork.add_agent(name="Sensor2",agentType=SineGeneratorAgent_Test2, log_mode=False)
-    gen_agent_test3 = agentNetwork.add_agent(name="Sensor3",agentType=SineGeneratorAgent_Test3, log_mode=False)
+    gen_agent_test1 = agentNetwork.add_agent(name="Sensor1", agentType=SineGeneratorAgent, log_mode=False)
+    gen_agent_test2 = agentNetwork.add_agent(name="Sensor2",agentType=SineGeneratorAgent, log_mode=False)
+    gen_agent_test3 = agentNetwork.add_agent(name="Sensor3",agentType=SineGeneratorAgent, log_mode=False)
 
 
     aggregator_agent = agentNetwork.add_agent(agentType=Aggregator)
@@ -540,9 +499,9 @@ def main():
     #setting agent parameters
     gen_agent_test1.init_parameters(sensor_buffer_size=10)
     gen_agent_test2.init_agent_loop(loop_wait=.01)
-    gen_agent_test3.init_parameters(sensor_buffer_size=10)
+    gen_agent_test3.init_parameters(sensor_buffer_size=10, scale_amplitude=.6)
     gen_agent_test1.init_agent_loop(loop_wait=.01)
-    gen_agent_test2.init_parameters(sensor_buffer_size=10)
+    gen_agent_test2.init_parameters(sensor_buffer_size=10, scale_amplitude=.3)
     gen_agent_test3.init_agent_loop(loop_wait=.01)
 
     aggregator_agent.init_parameters()
