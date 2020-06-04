@@ -228,6 +228,7 @@ class Aggregator(AgentMET4FOF):
             self.log_info(f"agg_df:{agg_df}")
             self.send_output(agg_df.to_dict("list"))
 
+# Disturbance class receives data from Aggregator and add anomalies to received data
 class Disturbance(AgentMET4FOF):
     def on_received_message(self, message):
         self.log_info(f"agg_message:{message}")
@@ -235,6 +236,7 @@ class Disturbance(AgentMET4FOF):
 
         # Generate every 5 seconds random anomaly data and multiple to each sensor data, random anomaly data mulipuled with fixed decimal number because purpose is different anomalies for each sensor
         if now.second % 5 == 0:
+            #added Anomalies value for checking that data is anomaly or not
             message['data'].update({'Anomalies': [True]})
             self.log_info(f'message_Anomalies:{message}')
 
@@ -250,7 +252,6 @@ class Disturbance(AgentMET4FOF):
 
         # Generate normal data during every 5 seconds
         if now.second % 5 != 0:
-            self.log_info(f'aaa:{message}')
             X_test_df = pd.DataFrame([message['data']['Time'],message['data']['y1'], message['data']['y2'], message['data']['y3']])
             X_test_df = X_test_df.T
 
@@ -296,6 +297,7 @@ class Trainer_Predictor(AgentMET4FOF):
         self.log_info("trainer_Start")
         self.log_info(f"Disturbance_message:{message}")
 
+#stream data comes from disturbance and because disturbance generates normal and abnormal data and we just want to train our model with normal data we omit data that has anomalies value
         if 'Anomalies' not in message['data']:
             X_train_df_temp = pd.DataFrame([message['data']['y1'], message['data']['y2'], message['data']['y3']])
             X_train_df_temp = X_train_df_temp.T
